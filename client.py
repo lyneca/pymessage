@@ -1,7 +1,7 @@
 import socket
 import os
 
-os.system('start python display.py')
+os.startfile('display.py')
 messages = ''
 HOST, PORT = "10.26.142.14", 80
 # HOST, PORT = "localhost", 80
