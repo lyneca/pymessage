@@ -1,7 +1,8 @@
 import socket
 import os
 import time
-HOST, PORT = "10.2.1.24", 80
+HOST, PORT = "10.26.142.14", 80
+# HOST, PORT = "localhost", 80
 old_messages = ''
 while True:
     while True:
@@ -9,7 +10,7 @@ while True:
             sock = socket.socket()
             sock.connect((HOST, PORT))
             break
-        except WindowsError:
+        except (ConnectionRefusedError, ConnectionResetError):
             print("Can't connect to server.")
             time.sleep(1)
     sock.sendall(bytes(chr(1), "utf-8"))

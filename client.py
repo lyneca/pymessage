@@ -1,9 +1,15 @@
 import socket
 import os
+
 os.system('start python display.py')
 messages = ''
-HOST, PORT = "10.2.1.24", 80
+HOST, PORT = "10.26.142.14", 80
+# HOST, PORT = "localhost", 80
 os.system("mode con: cols=70 lines=5")
+err = []
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((HOST, PORT))
+sock.sendall(bytes(chr(3), "utf-8"))
 while True:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data = input('> ')
@@ -14,6 +20,10 @@ while True:
 
         # Receive data from the server and shut down
         messages = str(sock.recv(1024), "utf-8")
+    except (ConnectionRefusedError, ConnectionResetError):
+        err.append("Can't connect.")
     finally:
         sock.close()
         os.system('cls')
+        for i in range(len(err)):
+            print(err.pop(i))
