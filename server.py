@@ -83,10 +83,10 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 if data.split()[2] == 'cls':
                     global messages
                     messages = []
-                    add_message(ip, "cleared history", False)
+                    add_message(ip, users[ip] + " cleared history", False)
             else:
-                add_message(ip, "tried to type in the admin password.", False)
-        elif len(data) == 1:
+                add_message(ip, users[ip] + " tried to type in the admin password.", False)
+        elif len(data) == 1 and ord(data) < 30:
             if ord(data) == 1:
                 pass
             elif ord(data) == 3:
@@ -94,7 +94,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
         else:
             add_message(ip, data)
             print(get_server_time() + ": message from " + ip)
-        for message in messages:
+        for message in messages[-30:]:
             message.update()
             out += str(message) + '\n'
         self.request.sendall(bytes(out, "utf-8"))
