@@ -79,6 +79,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             chan, data, name = recv.split(chr(0))
         else:
             chan, data = recv.split(chr(0))
+            name = 'anon'
         if data.split()[0] == ':nick':
             if ip in users:
                 last_nick = users[ip]
