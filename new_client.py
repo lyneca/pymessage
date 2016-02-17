@@ -53,8 +53,18 @@ def get_messages():
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((HOST, PORT))
                 sock.sendall(bytes(chr(2), "utf-8"))
-                count = sock.recv(1024).decode()
+                recvd = sock.recv(1024).decode().split('||')
+                print(recvd)
+                count = recvd[0]
+                users = recvd[1]
                 ctypes.windll.kernel32.SetConsoleTitleA(bytes(str(count) + " users online", "utf-8"))
+                i = 0
+                u.wclear(people_win)
+                u.box(people_win)
+                for user in users:
+                    i += 1
+                    u.mvwaddstr(people_win, i, 1, user)
+                u.wrefresh(people_win)
                 sock = socket.socket()
                 sock.connect((HOST, PORT))
                 break
@@ -69,7 +79,7 @@ def get_messages():
             draw_boxes()
             for message in get_latest(incoming_messages.split('\n')):
                 i += 1
-                u.mvwaddstr(chat_win, i, 1, message)
+                u.mvwaddstr(chat_win, i, 1, message[:78])
             u.wrefresh(chat_win)
             old_messages = incoming_messages
         time.sleep(0.1)

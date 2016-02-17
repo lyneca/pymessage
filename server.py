@@ -63,7 +63,6 @@ def count_online():
     c = 0
     for user in users:
         if not get_last_message_by(user) is None:
-            print((datetime.now() - get_last_message_by(user).datetime).total_seconds())
             if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 1:
                 c += 1
     return c
@@ -105,7 +104,9 @@ class TCPHandler(socketserver.BaseRequestHandler):
             elif ord(data) == 2:
                 send = False
                 o = count_online()
-                self.request.sendall(bytes(str(o), "utf-8"))
+                u = '|'.join(users.values())
+                u += '|anon' * (o - len(users))
+                self.request.sendall(bytes(str(o) + '||' + u, "utf-8"))
             elif ord(data) == 3:
                 add_message(ip, "anon [%s] has connected" % ip, False)
                 users[ip] = 'anon'
@@ -126,6 +127,7 @@ server = socketserver.TCPServer((HOST, PORT), TCPHandler)
 # Activate the server; this will keep running until you
 # interrupt the program with Ctrl-C
 try:
+    print("Server up.")
     server.serve_forever()
 except KeyboardInterrupt:
     print("Stopping server...")
