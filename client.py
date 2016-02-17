@@ -4,10 +4,11 @@ import time
 import socket
 import ctypes
 import threading
-
+import sys
+kill_thread = False
 # HOST, PORT = "10.26.142.14", 80
-HOST, PORT = "10.2.1.55", 80
-# HOST, PORT = 'localhost', 80
+# HOST, PORT = "10.2.1.55", 80
+HOST, PORT = 'localhost', 80
 os.system("mode con: cols=120 lines=30")
 
 m_to_display = 22
@@ -17,6 +18,8 @@ u.curs_set(0)
 chat_win = u.newwin(25, 90, 0, 0)
 input_win = u.newwin(5, 90, 25, 0)
 people_win = u.newwin(30, 30, 0, 90)
+
+channel = "lobby"
 
 
 def draw_boxes():
@@ -48,12 +51,14 @@ def get_latest(l):
 def get_messages():
     old_messages = ''
     while True:
+        if kill_thread:
+            break
         time.sleep(0.05)
         while True:
             try:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.connect((HOST, PORT))
-                sock.sendall(bytes(chr(2), "utf-8"))
+                sock.sendall(bytes(channel + chr(0) + chr(2), "utf-8"))
                 recvd = sock.recv(1024).decode().split('||')
                 count = recvd[0]
                 users = recvd[1].split('|')
@@ -72,7 +77,7 @@ def get_messages():
             except (ConnectionRefusedError, ConnectionResetError):
                 u.mvwaddstr(chat_win, 1, 1, "Can't connect.")
                 time.sleep(1)
-        sock.sendall(bytes(chr(1), "utf-8"))
+        sock.sendall(bytes(channel + chr(0) + chr(1), "utf-8"))
         incoming_messages = str(sock.recv(4096), "utf-8")
         if not incoming_messages == old_messages:
             i = 0
@@ -85,6 +90,7 @@ def get_messages():
             old_messages = incoming_messages
         time.sleep(0.1)
 
+
 message_refresh_thread = threading.Thread(target=get_messages)
 
 err = []
@@ -96,7 +102,7 @@ while True:
         print("Can't connect.")
         continue
     break
-sock.sendall(bytes(chr(3), "utf-8"))
+sock.sendall(bytes(channel + chr(0) + chr(3), "utf-8"))
 message_refresh_thread.start()
 while True:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -105,13 +111,27 @@ while True:
     refresh()
     u.flushinp()
     data = u.mvwgetstr(input_win, 1, 3)
-    try:
-        sock.connect((HOST, PORT))
-        sock.sendall(bytes(data + "\n", "utf-8"))
-    except (ConnectionRefusedError, ConnectionResetError):
-        err.append("Can't connect.")
-    finally:
-        sock.close()
-        refresh()
-
-u.getstr([10, 10])
+    send = True
+    if len(data.split()) > 1:
+        if data.split()[0] == ":join":
+            try:
+                channel = data.split()[1]
+            except IndexError:
+                pass
+    elif data in [":exit", "^C", ":quit", ":q"]:
+        break
+    if send:
+        try:
+            sock.connect((HOST, PORT))
+            sock.sendall(bytes(channel + chr(0) + data + "\n", "utf-8"))
+        except (ConnectionRefusedError, ConnectionResetError):
+            err.append("Can't connect.")
+        finally:
+            sock.close()
+    refresh()
+sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock.connect((HOST, PORT))
+sock.sendall(bytes(channel + chr(0) + chr(4) + "\n", "utf-8"))
+u.endwin()
+# noinspection PyRedeclaration
+kill_thread = True

@@ -1,11 +1,6 @@
 import socketserver
 from datetime import datetime
 
-controls = [
-    chr(0),
-    chr(1)
-]
-
 pwd = "kek"
 
 messages = []
@@ -17,7 +12,8 @@ def get_server_time():
 
 
 class Message:
-    def __init__(self, message, ip, time, datetime, u):
+    def __init__(self, ip, chan, message, time, datetime, u):
+        self.chan = chan
         self.time = time
         self.u = u
         self.datetime = datetime
@@ -55,8 +51,8 @@ def get_last_message_by(ip):
     return None
 
 
-def add_message(ip, msg=None, u=True):
-    messages.append(Message(msg, ip, get_server_time(), datetime.now(), u))
+def add_message(ip, chan, msg=None, u=True):
+    messages.append(Message(ip, chan, msg, get_server_time(), datetime.now(), u))
 
 
 def count_online():
@@ -78,50 +74,58 @@ class TCPHandler(socketserver.BaseRequestHandler):
         out = ''
         send = True
         ip = self.client_address[0]
-        data = self.request.recv(1024).decode().rstrip()
+        recv = self.request.recv(1024).decode().rstrip()
+        chan, data = recv.split(chr(0))
         if data.split()[0] == ':nick':
             if ip in users:
                 last_nick = users[ip]
             else:
                 last_nick = 'anon'
             users[ip] = ' '.join(data.split()[1:])
-            add_message(ip, last_nick + " is now known as " + data.split()[1], False)
+            add_message(ip, chan, last_nick + " is now known as " + data.split()[1], False)
         elif data.split()[0] == ':ping':
             if not get_last_message_by(get_ip_by_user(data.split()[1])) is None:
                 if (datetime.now() - get_last_message_by(get_ip_by_user(data.split()[1])).datetime).total_seconds() < 5:
-                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user online", False)
+                    add_message(ip, chan, users[ip] + " pinged " + data.split()[1] + ": user online", False)
                 else:
-                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user not online", False)
+                    add_message(ip, chan, users[ip] + " pinged " + data.split()[1] + ": user not online", False)
             else:
-                add_message(ip, users[ip] + " pinged " + data.split()[1] + ": not a user", False)
+                add_message(ip, chan, users[ip] + " pinged " + data.split()[1] + ": not a user", False)
 
         elif data.split()[0] == ':sudo':
             if data.split()[1] == pwd:
                 if data.split()[2] == 'cls':
                     global messages
                     messages = []
-                    add_message(ip, users[ip] + " cleared history", False)
+                    add_message(ip, chan, users[ip] + " cleared history", False)
             else:
-                add_message(ip, users[ip] + " tried to type in the admin password.", False)
+                add_message(ip, chan, users[ip] + " tried to type in the admin password.", False)
+        elif data.split()[0] == ':join':
+            add_message(ip, chan, users[ip] + " joined channel #" + chan, False)
         elif len(data) == 1 and ord(data) < 30:
             if ord(data) == 1:
-                add_message(ip)
+                add_message(ip, chan)
             elif ord(data) == 2:
                 send = False
                 o = count_online()
                 u = '|'.join([users[x] + ' [' + x + ']' for x in users])
                 self.request.sendall(bytes(str(o) + '||' + u, "utf-8"))
             elif ord(data) == 3:
-                add_message(ip, "[%s] has connected" % ip, False)
-                users[ip] = 'anon'
+                if ip not in users:
+                    users[ip] = 'anon'
+                add_message(ip, chan, "%s [%s] has connected" % (users[ip], ip), False)
+                add_message(ip, chan, users[ip] + " joined channel #" + chan, False)
+            elif ord(data) == 4:
+                add_message(ip, chan, "%s disconnected" % users[ip], False)
         else:
-            add_message(ip, data)
+            add_message(ip, chan, data)
             print(get_server_time() + ": message from " + ip)
         for message in messages:
             message.update()
-            if message.is_message:
+            if message.is_message and message.chan == chan:
                 out += str(message) + '\n'
-        if send: self.request.sendall(bytes(out, "utf-8"))
+        if send:
+            self.request.sendall(bytes(out, "utf-8"))
 
 
 HOST, PORT = "", 80

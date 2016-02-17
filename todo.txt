@@ -1,0 +1,4 @@
+Additions
+ - Channels
+Fixes
+ - long input
