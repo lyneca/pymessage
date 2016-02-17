@@ -1,0 +1,18 @@
+from unicurses import *
+
+os.system("mode con: cols=70 lines=30")
+stdscr = initscr()
+cbreak()
+noecho()
+curs_set(0)
+chat_win = newwin(25, 50, 0, 0)
+input_win = newwin(5, 50, 25, 0)
+people_win = newwin(30, 20, 0, 50)
+box(chat_win)
+box(input_win)
+box(people_win)
+mvwaddstr(chat_win, 1, 1, "hello")
+wrefresh(chat_win)
+wrefresh(input_win)
+wrefresh(people_win)
+input()

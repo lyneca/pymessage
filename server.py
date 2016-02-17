@@ -79,7 +79,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             if ip in users:
                 last_nick = users[ip]
             else:
-                last_nick = 'anon [' + ip + ']'
+                last_nick = 'anon'
             users[ip] = ' '.join(data.split()[1:])
             add_message(ip, last_nick + " is now known as " + data.split()[1], False)
         elif data.split()[0] == ':ping':
@@ -108,7 +108,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 self.request.sendall(bytes(str(o), "utf-8"))
             elif ord(data) == 3:
                 add_message(ip, "anon [%s] has connected" % ip, False)
-                users[ip] = 'anon [%s]' % ip
+                users[ip] = 'anon'
         else:
             add_message(ip, data)
             print(get_server_time() + ": message from " + ip)

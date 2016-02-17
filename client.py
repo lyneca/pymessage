@@ -1,9 +1,7 @@
 import socket
-import unicurses
+import unicurses_test
 import os
 
-# os.startfile('display.py')
-messages = ''
 HOST, PORT = "10.26.142.14", 80
 # HOST, PORT = "localhost", 80
 os.system("mode con: cols=70 lines=5")
