@@ -64,7 +64,7 @@ def count_online():
     to_pop = []
     for user in users:
         if not get_last_message_by(user) is None:
-            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 1:
+            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 5:
                 c += 1
             else:
                 to_pop.append(user)
@@ -88,7 +88,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
             add_message(ip, last_nick + " is now known as " + data.split()[1], False)
         elif data.split()[0] == ':ping':
             if not get_last_message_by(get_ip_by_user(data.split()[1])) is None:
-                if (datetime.now() - get_last_message_by(get_ip_by_user(data.split()[1])).datetime).total_seconds() < 1:
+                if (datetime.now() - get_last_message_by(get_ip_by_user(data.split()[1])).datetime).total_seconds() < 5:
                     add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user online", False)
                 else:
                     add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user not online", False)
