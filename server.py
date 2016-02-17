@@ -75,7 +75,10 @@ class TCPHandler(socketserver.BaseRequestHandler):
         send = True
         ip = self.client_address[0]
         recv = self.request.recv(1024).decode().rstrip()
-        chan, data = recv.split(chr(0))
+        if len(recv.split(chr(0))) == 3:
+            chan, data, name = recv.split(chr(0))
+        else:
+            chan, data = recv.split(chr(0))
         if data.split()[0] == ':nick':
             if ip in users:
                 last_nick = users[ip]
@@ -114,8 +117,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 u = '|'.join([users[x] + ' [' + x + ']' for x in users])
                 self.request.sendall(bytes(str(o) + '||' + u, "utf-8"))
             elif ord(data) == 3:
-                if ip not in users:
-                    users[ip] = 'anon'
+                users[ip] = name
                 add_message(ip, chan, "%s [%s] has connected" % (users[ip], ip), False)
                 add_message(ip, chan, users[ip] + " joined #" + chan, False)
             elif ord(data) == 4:

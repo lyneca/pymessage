@@ -1,3 +1,4 @@
+import argparse
 import ctypes
 import os
 import socket
@@ -6,15 +7,22 @@ import time
 
 import unicurses as u
 
+parser = argparse.ArgumentParser(description="Open a client connected to an ip.")
+parser.add_argument('host', default='localhost', nargs='?', help='server host address')
+parser.add_argument('port', default='80', type=int, nargs='?', help='server host post')
+parser.add_argument('-c', '--channel', default='lobby')
+parser.add_argument('-u', '--user', default='anon')
+
+
+args = parser.parse_args()
+
 kill_thread = False
-# HOST, PORT = "10.26.142.14", 80
-# HOST, PORT = "10.2.1.55", 80
-HOST, PORT = 'localhost', 80
+HOST, PORT = args.host, args.port
+channel = args.channel
+
 os.system("mode con: cols=120 lines=30")
 
 m_to_display = 22
-
-channel = "lobby"
 
 
 def draw_boxes():
@@ -94,10 +102,10 @@ while True:
     try:
         sock.connect((HOST, PORT))
     except WindowsError:
-        print("Can't connect.")
+        print("Can't connect: " + HOST + ':' + str(PORT))
         continue
     break
-sock.sendall(bytes(channel + chr(0) + chr(3), "utf-8"))
+sock.sendall(bytes(channel + chr(0) + chr(3) + chr(0) + args.user, "utf-8"))
 stdscr = u.initscr()
 u.curs_set(0)
 chat_win = u.newwin(25, 90, 0, 0)
@@ -136,3 +144,5 @@ sock.sendall(bytes(channel + chr(0) + chr(4) + "\n", "utf-8"))
 u.endwin()
 # noinspection PyRedeclaration
 kill_thread = True
+time.sleep(0.1)
+os.system('cls')
