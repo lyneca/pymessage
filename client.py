@@ -1,10 +1,11 @@
-import unicurses as u
-import os
-import time
-import socket
 import ctypes
+import os
+import socket
 import threading
-import sys
+import time
+
+import unicurses as u
+
 kill_thread = False
 # HOST, PORT = "10.26.142.14", 80
 # HOST, PORT = "10.2.1.55", 80
@@ -12,12 +13,6 @@ HOST, PORT = 'localhost', 80
 os.system("mode con: cols=120 lines=30")
 
 m_to_display = 22
-
-stdscr = u.initscr()
-u.curs_set(0)
-chat_win = u.newwin(25, 90, 0, 0)
-input_win = u.newwin(5, 90, 25, 0)
-people_win = u.newwin(30, 30, 0, 90)
 
 channel = "lobby"
 
@@ -62,11 +57,11 @@ def get_messages():
                 recvd = sock.recv(1024).decode().split('||')
                 count = recvd[0]
                 users = recvd[1].split('|')
-                ctypes.windll.kernel32.SetConsoleTitleA(bytes("Chat: " + str(count) + " user(s) online", "utf-8"))
+                ctypes.windll.kernel32.SetConsoleTitleA(bytes(channel + ": " + str(count) + " user(s) online", "utf-8"))
                 u.wclear(people_win)
                 u.box(people_win)
                 i = 1
-                u.mvwaddstr(people_win, i, 1, ' Users online:')
+                u.mvwaddstr(people_win, i, 1, ' Users in #%s:' % channel)
                 for user in users:
                     i += 1
                     u.mvwaddstr(people_win, i, 1, '  - ' + user)
@@ -103,6 +98,11 @@ while True:
         continue
     break
 sock.sendall(bytes(channel + chr(0) + chr(3), "utf-8"))
+stdscr = u.initscr()
+u.curs_set(0)
+chat_win = u.newwin(25, 90, 0, 0)
+input_win = u.newwin(5, 90, 25, 0)
+people_win = u.newwin(30, 30, 0, 90)
 message_refresh_thread.start()
 while True:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -112,13 +112,8 @@ while True:
     u.flushinp()
     data = u.mvwgetstr(input_win, 1, 3)
     send = True
-    if len(data.split()) > 1:
-        if data.split()[0] == ":join":
-            try:
-                channel = data.split()[1]
-            except IndexError:
-                pass
-    elif data in [":exit", "^C", ":quit", ":q"]:
+
+    if data in [":exit", "^C", ":quit", ":q"]:
         break
     if send:
         try:
@@ -128,6 +123,12 @@ while True:
             err.append("Can't connect.")
         finally:
             sock.close()
+    if len(data.split()) > 1:
+        if data.split()[0] == ":join":
+            try:
+                channel = data.split()[1]
+            except IndexError:
+                pass
     refresh()
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 sock.connect((HOST, PORT))

@@ -96,12 +96,15 @@ class TCPHandler(socketserver.BaseRequestHandler):
             if data.split()[1] == pwd:
                 if data.split()[2] == 'cls':
                     global messages
-                    messages = []
+                    for message in messages:
+                        if message.chan == chan:
+                            messages.remove(message)
                     add_message(ip, chan, users[ip] + " cleared history", False)
             else:
                 add_message(ip, chan, users[ip] + " tried to type in the admin password.", False)
         elif data.split()[0] == ':join':
-            add_message(ip, chan, users[ip] + " joined channel #" + chan, False)
+            add_message(ip, chan, users[ip] + " left #" + chan, False)
+            add_message(ip, data.split()[1], users[ip] + " joined #" + data.split()[1], False)
         elif len(data) == 1 and ord(data) < 30:
             if ord(data) == 1:
                 add_message(ip, chan)
@@ -114,7 +117,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
                 if ip not in users:
                     users[ip] = 'anon'
                 add_message(ip, chan, "%s [%s] has connected" % (users[ip], ip), False)
-                add_message(ip, chan, users[ip] + " joined channel #" + chan, False)
+                add_message(ip, chan, users[ip] + " joined #" + chan, False)
             elif ord(data) == 4:
                 add_message(ip, chan, "%s disconnected" % users[ip], False)
         else:
