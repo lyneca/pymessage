@@ -1,4 +1,5 @@
 import socket
+import unicurses
 import os
 
 # os.startfile('display.py')
@@ -19,7 +20,7 @@ while True:
         sock.sendall(bytes(data + "\n", "utf-8"))
 
         # Receive data from the server and shut down
-        messages = str(sock.recv(1024), "utf-8")
+        messages = str(sock.recv(1024))
     except (ConnectionRefusedError, ConnectionResetError):
         err.append("Can't connect.")
     finally:
