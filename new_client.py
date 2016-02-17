@@ -5,17 +5,17 @@ import socket
 import ctypes
 import threading
 
-HOST, PORT = "10.26.142.14", 80
-
-os.system("mode con: cols=100 lines=30")
+# HOST, PORT = "10.26.142.14", 80
+HOST, PORT = 'localhost', 80
+os.system("mode con: cols=120 lines=30")
 
 m_to_display = 22
 
 stdscr = u.initscr()
 u.curs_set(0)
-chat_win = u.newwin(25, 80, 0, 0)
-input_win = u.newwin(5, 80, 25, 0)
-people_win = u.newwin(30, 20, 0, 80)
+chat_win = u.newwin(25, 90, 0, 0)
+input_win = u.newwin(5, 90, 25, 0)
+people_win = u.newwin(30, 30, 0, 90)
 
 
 def draw_boxes():
@@ -54,16 +54,16 @@ def get_messages():
                 sock.connect((HOST, PORT))
                 sock.sendall(bytes(chr(2), "utf-8"))
                 recvd = sock.recv(1024).decode().split('||')
-                print(recvd)
                 count = recvd[0]
-                users = recvd[1]
-                ctypes.windll.kernel32.SetConsoleTitleA(bytes(str(count) + " users online", "utf-8"))
-                i = 0
+                users = recvd[1].split('|')
+                ctypes.windll.kernel32.SetConsoleTitleA(bytes("Chat: " + str(count) + " user(s) online", "utf-8"))
                 u.wclear(people_win)
                 u.box(people_win)
+                i = 1
+                u.mvwaddstr(people_win, i, 1, ' Users online:')
                 for user in users:
                     i += 1
-                    u.mvwaddstr(people_win, i, 1, user)
+                    u.mvwaddstr(people_win, i, 1, '  - ' + user)
                 u.wrefresh(people_win)
                 sock = socket.socket()
                 sock.connect((HOST, PORT))
@@ -84,14 +84,19 @@ def get_messages():
             old_messages = incoming_messages
         time.sleep(0.1)
 
-
 message_refresh_thread = threading.Thread(target=get_messages)
 
-message_refresh_thread.start()
 err = []
 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-sock.connect((HOST, PORT))
+while True:
+    try:
+        sock.connect((HOST, PORT))
+    except WindowsError:
+        print("Can't connect.")
+        continue
+    break
 sock.sendall(bytes(chr(3), "utf-8"))
+message_refresh_thread.start()
 while True:
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     u.wclear(input_win)

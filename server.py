@@ -25,21 +25,21 @@ class Message:
         self.ip = ip
         self.is_message = message is not None
         if ip in users:
-            self.name = users[self.ip] + ' [' + self.ip + ']'
+            self.name = users[self.ip]
         else:
-            self.name = 'anon [' + self.ip + ']'
+            self.name = 'anon'
 
     def __str__(self):
         if self.u:
-            return self.time + ' ' + self.name + ': ' + self.message
+            return ' ' + self.time + ' ' + self.name + ': ' + self.message
         else:
             return " * " + self.message + " *"
 
     def update(self):
         if self.ip in users:
-            self.name = users[self.ip] + ' [' + self.ip + ']'
+            self.name = users[self.ip]
         else:
-            self.name = 'anon [' + self.ip + ']'
+            self.name = 'anon'
 
 
 def get_ip_by_user(user):
@@ -61,10 +61,15 @@ def add_message(ip, msg=None, u=True):
 
 def count_online():
     c = 0
+    to_pop = []
     for user in users:
         if not get_last_message_by(user) is None:
             if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 1:
                 c += 1
+            else:
+                to_pop.append(user)
+    for u in to_pop:
+        users.pop(u)
     return c
 
 
@@ -73,7 +78,7 @@ class TCPHandler(socketserver.BaseRequestHandler):
         out = ''
         send = True
         ip = self.client_address[0]
-        data = self.request.recv(1024).decode().strip()
+        data = self.request.recv(1024).decode().rstrip()
         if data.split()[0] == ':nick':
             if ip in users:
                 last_nick = users[ip]
@@ -84,9 +89,9 @@ class TCPHandler(socketserver.BaseRequestHandler):
         elif data.split()[0] == ':ping':
             if not get_last_message_by(get_ip_by_user(data.split()[1])) is None:
                 if (datetime.now() - get_last_message_by(get_ip_by_user(data.split()[1])).datetime).total_seconds() < 1:
-                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": online in past second", False)
+                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user online", False)
                 else:
-                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": not online in past second", False)
+                    add_message(ip, users[ip] + " pinged " + data.split()[1] + ": user not online", False)
             else:
                 add_message(ip, users[ip] + " pinged " + data.split()[1] + ": not a user", False)
 
@@ -104,11 +109,10 @@ class TCPHandler(socketserver.BaseRequestHandler):
             elif ord(data) == 2:
                 send = False
                 o = count_online()
-                u = '|'.join(users.values())
-                u += '|anon' * (o - len(users))
+                u = '|'.join([users[x] + ' [' + x + ']' for x in users])
                 self.request.sendall(bytes(str(o) + '||' + u, "utf-8"))
             elif ord(data) == 3:
-                add_message(ip, "anon [%s] has connected" % ip, False)
+                add_message(ip, "[%s] has connected" % ip, False)
                 users[ip] = 'anon'
         else:
             add_message(ip, data)
