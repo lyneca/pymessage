@@ -59,7 +59,7 @@ def get_messages():
         time.sleep(0.05)
         while True:
             try:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock = socket.socket()
                 sock.connect((HOST, PORT))
                 sock.sendall(bytes(channel + chr(0) + chr(2), "utf-8"))
                 recvd = sock.recv(1024).decode().split('||')
@@ -97,7 +97,7 @@ def get_messages():
 message_refresh_thread = threading.Thread(target=get_messages)
 
 err = []
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket()
 while True:
     try:
         sock.connect((HOST, PORT))
@@ -113,7 +113,7 @@ input_win = u.newwin(5, 90, 25, 0)
 people_win = u.newwin(30, 30, 0, 90)
 message_refresh_thread.start()
 while True:
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock = socket.socket()
     u.wclear(input_win)
     u.mvwaddstr(input_win, 1, 1, '> ')
     refresh()
@@ -138,7 +138,7 @@ while True:
             except IndexError:
                 pass
     refresh()
-sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+sock = socket.socket()
 sock.connect((HOST, PORT))
 sock.sendall(bytes(channel + chr(0) + chr(4) + "\n", "utf-8"))
 u.endwin()
