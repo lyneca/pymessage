@@ -1,5 +1,6 @@
 import socketserver
 from datetime import datetime
+import os
 
 pwd = "kek"
 
@@ -71,10 +72,19 @@ def count_online():
 
 class TCPHandler(socketserver.BaseRequestHandler):
     def handle(self):
+        add = True
         out = ''
         send = True
         ip = self.client_address[0]
-        recv = self.request.recv(1024).decode().rstrip()
+        recv = self.request.recv(4096 * 32).decode().rstrip()
+        # if len(recv.split(chr(0))) >= 4:
+        #     chan, id, name, = recv.split(chr(0))[:3]
+        #     data = bytes(chr(0).join(recv.split(chr(0))[3:]), "utf-8")
+        #     if not os.path.isdir(chan):
+        #         os.mkdir(chan)
+        #     with open(chan + os.path.sep + name, 'xb') as file:
+        #         file.write(data)
+        #     add = False
         if len(recv.split(chr(0))) == 3:
             chan, data, name = recv.split(chr(0))
         else:
@@ -124,8 +134,12 @@ class TCPHandler(socketserver.BaseRequestHandler):
             elif ord(data) == 4:
                 add_message(ip, chan, "%s disconnected" % users[ip], False)
         else:
-            add_message(ip, chan, data)
-            print(get_server_time() + ": message from " + ip)
+            if add:
+                add_message(ip, chan, data)
+                print(get_server_time() + ": message from " + ip)
+            else:
+                add_message(ip, chan, '%s sent a file: %s' % (users[ip], name), False)
+                print(get_server_time() + ": file from " + ip)
         for message in messages:
             message.update()
             if message.is_message and message.chan == chan:

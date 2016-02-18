@@ -120,7 +120,15 @@ while True:
     u.flushinp()
     data = u.mvwgetstr(input_win, 1, 3)
     send = True
-
+    # if len(data.split()) > 1:
+    #     if data.split()[0] == ":send":
+    #         file = data.split()[1]
+    #         if os.path.exists(file) and not os.path.isdir(file):
+    #             bdata = open(file, 'rb').read()
+    #             sock.connect((HOST, PORT))
+    #             sock.sendall(bytes(channel + chr(0) + chr(5) + chr(0) + file + chr(0) + str(bdata) + "\n", "utf-8"))
+    #             sock.close()
+    #             send = False
     if data in [":exit", "^C", ":quit", ":q"]:
         break
     if send:
@@ -137,6 +145,8 @@ while True:
                 channel = data.split()[1]
             except IndexError:
                 pass
+
+
     refresh()
 sock = socket.socket()
 sock.connect((HOST, PORT))
