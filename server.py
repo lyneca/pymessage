@@ -68,7 +68,7 @@ def update_users():
     popped = []
     for user in users:
         if not get_last_message_by(user) is None:
-            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 1:
+            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 5:
                 c += 1
             else:
                 to_pop.append(user)
