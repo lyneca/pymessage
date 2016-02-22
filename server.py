@@ -1,11 +1,13 @@
 import socketserver
+import threading
+import time
 from datetime import datetime
-import os
 
 pwd = "kek"
 
 messages = []
 users = {}
+channels = {}
 
 
 def get_server_time():
@@ -57,17 +59,35 @@ def add_message(ip, chan, msg=None, u=True):
 
 
 def count_online():
+    return len(users)
+
+
+def update_users():
     c = 0
     to_pop = []
+    popped = []
     for user in users:
         if not get_last_message_by(user) is None:
-            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 5:
+            if (datetime.now() - get_last_message_by(user).datetime).total_seconds() < 1:
                 c += 1
             else:
                 to_pop.append(user)
     for u in to_pop:
+        popped.append([u, users[u]])
         users.pop(u)
-    return c
+    return popped
+
+
+def add_user_to_chan(ip, chan):
+    if chan not in channels:
+        channels[chan] = []
+    channels[chan].append(ip)
+
+
+def remove_user_from_channels(ip):
+    for channel in channels:
+        if ip in channel:
+            channel.pop(ip)
 
 
 class TCPHandler(socketserver.BaseRequestHandler):
@@ -109,7 +129,6 @@ class TCPHandler(socketserver.BaseRequestHandler):
         elif data.split()[0] == ':sudo':
             if data.split()[1] == pwd:
                 if data.split()[2] == 'cls':
-                    global messages
                     for message in messages:
                         if message.chan == chan:
                             messages.remove(message)
@@ -130,13 +149,14 @@ class TCPHandler(socketserver.BaseRequestHandler):
             elif ord(data) == 3:
                 users[ip] = name
                 add_message(ip, chan, "%s [%s] has connected" % (users[ip], ip), False)
+                remove_user_from_channels(ip)
+                add_user_to_chan(ip, chan)
                 add_message(ip, chan, users[ip] + " joined #" + chan, False)
-            elif ord(data) == 4:
-                add_message(ip, chan, "%s disconnected" % users[ip], False)
+                print(get_server_time() + ": %s joined" % ip)
         else:
             if add:
                 add_message(ip, chan, data)
-                print(get_server_time() + ": message from " + ip)
+                print(get_server_time() + ": message from [%s] in channel %s" % (ip, chan))
             else:
                 add_message(ip, chan, '%s sent a file: %s' % (users[ip], name), False)
                 print(get_server_time() + ": file from " + ip)
@@ -148,6 +168,22 @@ class TCPHandler(socketserver.BaseRequestHandler):
             self.request.sendall(bytes(out, "utf-8"))
 
 
+def get_current_channel(u):
+    for channel in channels:
+        if u in channel:
+            return channel
+
+
+def update_thread():
+    while True:
+        dcd = update_users()
+        for u, ip in dcd:
+            add_message(ip, get_current_channel(ip), "%s [%s] disconnected" % (ip, u), False)
+            print(get_server_time() + ': ' + u, 'disconnected.')
+
+
+uthread = threading.Thread(target=update_thread)
+uthread.start()
 HOST, PORT = "", 80
 print("Starting server...")
 server = socketserver.TCPServer((HOST, PORT), TCPHandler)
